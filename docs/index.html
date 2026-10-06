@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>高雄歷年碩博士人數趨勢</title>
+<style>
+  :root {
+    --bg: #f4f6f9; --card: #ffffff; --text: #1f2933; --muted: #5f6b7a; --line: #dde3ea;
+    --accent: #1d4ed8; --kh: #c2410c; --tw: #1d4ed8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif; line-height: 1.5; }
+  header.top { padding: 20px 16px 8px; max-width: 1200px; margin: 0 auto; }
+  header.top h1 { margin: 0 0 4px; font-size: 1.5rem; }
+  header.top p { margin: 0; color: var(--muted); font-size: .9rem; }
+  #banner { display: none; max-width: 1200px; margin: 8px auto 0; padding: 10px 16px; background: #fff4e5;
+    border: 1px solid #f5c07a; color: #8a4b00; border-radius: 8px; font-size: .95rem; }
+  .filters { position: sticky; top: 0; z-index: 10; background: rgba(244,246,249,.96); backdrop-filter: blur(4px);
+    border-bottom: 1px solid var(--line); }
+  .filters-inner { max-width: 1200px; margin: 0 auto; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; }
+  .f-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .f-label { font-size: .85rem; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+  .seg button, .seg label { border: 0; background: transparent; padding: 6px 12px; font-size: .9rem; cursor: pointer;
+    color: var(--text); font-family: inherit; }
+  .seg button + button, .seg label + label { border-left: 1px solid var(--line); }
+  .seg button.on { background: var(--accent); color: #fff; }
+  .seg label { display: inline-flex; align-items: center; gap: 6px; user-select: none; }
+  .seg label.on { background: #e8eefc; font-weight: 600; }
+  .swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .range-wrap { display: flex; align-items: center; gap: 10px; }
+  .range-val { font-size: .9rem; min-width: 8.5em; text-align: center; font-variant-numeric: tabular-nums; }
+  .dual { position: relative; width: 200px; height: 24px; }
+  .dual .track { position: absolute; left: 0; right: 0; top: 10px; height: 4px; background: var(--line); border-radius: 2px; }
+  .dual .fill { position: absolute; top: 10px; height: 4px; background: var(--accent); border-radius: 2px; }
+  .dual input[type=range] { position: absolute; left: 0; width: 100%; top: 0; height: 24px; margin: 0; background: none;
+    pointer-events: none; -webkit-appearance: none; appearance: none; }
+  .dual input[type=range]::-webkit-slider-thumb { pointer-events: auto; -webkit-appearance: none; width: 18px; height: 18px;
+    border-radius: 50%; background: #fff; border: 2px solid var(--accent); cursor: pointer; }
+  .dual input[type=range]::-moz-range-thumb { pointer-events: auto; width: 14px; height: 14px; border-radius: 50%;
+    background: #fff; border: 2px solid var(--accent); cursor: pointer; }
+  .dual input[type=range]::-webkit-slider-runnable-track { background: transparent; }
+  .dual input[type=range]::-moz-range-track { background: transparent; }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 14px 10px; min-width: 0; }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .card h2 { margin: 0; font-size: 1.05rem; }
+  .card .sub { margin: 2px 0 0; font-size: .8rem; color: var(--muted); }
+  .chart-box { position: relative; height: 340px; margin-top: 6px; }
+  .chart { position: absolute; inset: 0; }
+  .chart.hidden { visibility: hidden; }
+  .empty { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center;
+    color: var(--muted); font-size: .95rem; padding: 0 20px; }
+  .empty.show { display: flex; }
+  .note { margin: 6px 2px 0; font-size: .8rem; color: var(--muted); }
+  footer { max-width: 1200px; margin: 0 auto; padding: 8px 16px 40px; font-size: .85rem; color: var(--muted); }
+  footer h3 { margin: 14px 0 4px; font-size: .9rem; color: var(--text); }
+  footer ul { margin: 4px 0 0; padding-left: 1.2em; }
+  footer a { color: var(--accent); }
+  @media (max-width: 720px) {
+    main { grid-template-columns: 1fr; padding: 12px; }
+    .chart-box { height: 300px; }
+    .filters { position: static; }
+    .dual { width: 160px; }
+    header.top h1 { font-size: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1 id="title">高雄歷年碩博士人數趨勢</h1>
+  <p>十五歲以上人口中，具碩士、博士學歷者的人數與占比；高雄與全國分開呈現，不相加。</p>
+</header>
+<div id="banner"></div>
+
+<section class="filters" aria-label="篩選條件">
+  <div class="filters-inner">
+    <div class="f-group"><span class="f-label">地區</span>
+      <div class="seg" id="f-area">
+        <label data-v="高雄"><input type="checkbox" value="高雄" checked><span class="swatch" style="background:var(--kh)"></span>高雄</label>
+        <label data-v="全國"><input type="checkbox" value="全國"><span class="swatch" style="background:var(--tw)"></span>全國</label>
+      </div>
+    </div>
+    <div class="f-group"><span class="f-label">學位顯示</span>
+      <div class="seg" id="f-mode">
+        <button type="button" data-v="total" class="on">研究所合計</button>
+        <button type="button" data-v="split">博碩分開（100–114 年）</button>
+      </div>
+    </div>
+    <div class="f-group"><span class="f-label">畢業狀態</span>
+      <div class="seg" id="f-comp">
+        <button type="button" data-v="grad" class="on">畢業</button>
+        <button type="button" data-v="all">含肄業</button>
+      </div>
+    </div>
+    <div class="f-group"><span class="f-label">年份區間</span>
+      <div class="range-wrap">
+        <div class="dual">
+          <div class="track"></div><div class="fill" id="fill"></div>
+          <input type="range" id="r-lo" min="96" max="114" step="1" value="96" aria-label="起始年">
+          <input type="range" id="r-hi" min="96" max="114" step="1" value="114" aria-label="結束年">
+        </div>
+        <span class="range-val" id="range-val"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main>
+  <section class="card" id="card-1">
+    <div class="card-head"><div><h2>碩博士人數消長</h2><p class="sub" id="sub-1"></p></div>
+      <div class="seg type-toggle" data-card="1"><button type="button" data-t="line" class="on">折線</button><button type="button" data-t="bar">長條</button></div></div>
+    <div class="chart-box"><div class="chart" id="chart-1"></div><div class="empty" id="empty-1"></div></div>
+  </section>
+  <section class="card" id="card-2">
+    <div class="card-head"><div><h2>占十五歲以上人口比例</h2><p class="sub" id="sub-2"></p></div>
+      <div class="seg type-toggle" data-card="2"><button type="button" data-t="line" class="on">折線</button><button type="button" data-t="bar">長條</button></div></div>
+    <div class="chart-box"><div class="chart" id="chart-2"></div><div class="empty" id="empty-2"></div></div>
+  </section>
+  <section class="card" id="card-3">
+    <div class="card-head"><div><h2>博士占研究所的比例</h2><p class="sub" id="sub-3"></p></div>
+      <div class="seg type-toggle" data-card="3"><button type="button" data-t="line" class="on">折線</button><button type="button" data-t="bar">長條</button></div></div>
+    <div class="chart-box"><div class="chart" id="chart-3"></div><div class="empty" id="empty-3"></div></div>
+    <p class="note">98–99 年博士人數偏低，所以只畫 100 年起。</p>
+  </section>
+  <section class="card" id="card-4">
+    <div class="card-head"><div><h2>高雄與全國的差距</h2><p class="sub" id="sub-4"></p></div>
+      <div class="seg type-toggle" data-card="4"><button type="button" data-t="line" class="on">折線</button><button type="button" data-t="bar">長條</button></div></div>
+    <div class="chart-box"><div class="chart" id="chart-4"></div><div class="empty" id="empty-4"></div></div>
+    <p class="note">差距 = 高雄的研究所占十五歲以上人口比例 − 全國的研究所占十五歲以上人口比例，單位為百分點；固定比較高雄與全國，不受「地區」與「學位顯示」影響。</p>
+  </section>
+</main>
+
+<footer id="footer"></footer>
+
+<script src="data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js" onerror="window.__echartsFailed = true"></script>
+<script>
+(function () {
+  'use strict';
+  var banner = document.getElementById('banner');
+  function showBanner(msg) { banner.textContent = msg; banner.style.display = 'block'; }
+
+  var D = window.GRAD_DATA;
+  if (!D) { showBanner('找不到資料檔 data.js，請確認它和 index.html 在同一個資料夾。'); return; }
+  var META = D.meta;
+
+  // ---------- 頁尾（從 meta 讀取） ----------
+  (function renderFooter() {
+    var el = document.getElementById('footer');
+    function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
+    var lim = (META.limitations || []).concat(META.notes || []);
+    el.innerHTML =
+      '<h3>資料來源</h3><div>' + esc(META.source) + '</div>' +
+      '<h3>資料期間</h3><div>' + esc(META.period) + '</div>' +
+      '<h3>限制說明</h3><ul>' + lim.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
+      '<h3>原始資料</h3><div><a href="https://github.com/Rowan0629/HW1006" target="_blank" rel="noopener">GitHub：Rowan0629/HW1006</a>（可下載原始資料與整理後的 CSV）</div>';
+  })();
+
+  if (typeof echarts === 'undefined') {
+    showBanner('圖表函式庫（ECharts）載入失敗，請連上網路後重新整理頁面。');
+    return;
+  }
+
+  // ---------- 資料索引 ----------
+  var YMIN = META.years[0], YMAX = META.years[1];
+  var SPLIT = META.splitYear, MERGE = META.mergeYear;
+  var idx = {}, pop = {};
+  D.records.forEach(function (r) {
+    var k = r.area + '|' + r.education + '|' + r.completion;
+    (idx[k] = idx[k] || {})[r.year] = r.count;
+    (pop[r.area] = pop[r.area] || {})[r.year] = r.population_15;
+  });
+  function count(area, edu, year, comp) {
+    var g = idx[area + '|' + edu + '|畢業'], p = idx[area + '|' + edu + '|肄業'];
+    if (!g || g[year] == null) return null;
+    return comp === 'all' ? g[year] + (p ? p[year] || 0 : 0) : g[year];
+  }
+  function ratio(num, den) { return (num == null || !den) ? null : num / den * 100; }
+
+  // ---------- 狀態 ----------
+  var state = { areas: ['高雄'], mode: 'total', comp: 'grad', lo: YMIN, hi: YMAX, types: { 1: 'line', 2: 'line', 3: 'line', 4: 'line' } };
+  var COLORS = { '高雄': { '研究所': '#c2410c', '博士': '#c2410c', '碩士': '#f59e0b' },
+                 '全國': { '研究所': '#1d4ed8', '博士': '#1d4ed8', '碩士': '#38bdf8' } };
+  var GAP_COLOR = '#0f766e';
+  function yl(y) { return y + ' 年'; }
+  function yearsRange(lo, hi) { var a = []; for (var y = lo; y <= hi; y++) a.push(y); return a; }
+  function fmtInt(v) { return v == null ? '–' : Math.round(v).toLocaleString('zh-TW'); }
+  var compText = function () { return state.comp === 'grad' ? '畢業' : '畢業＋肄業'; };
+
+  // ---------- 圖 ----------
+  var charts = {};
+  [1, 2, 3, 4].forEach(function (i) { charts[i] = echarts.init(document.getElementById('chart-' + i)); });
+
+  function markLine(years) {
+    var data = [];
+    if (years.indexOf(MERGE) >= 0 && state.lo <= MERGE && MERGE <= state.hi)
+      data.push({ xAxis: yl(MERGE), label: { formatter: '高雄縣市合併', position: 'insideEndTop' } });
+    if (years.indexOf(SPLIT) >= 0 && state.lo <= SPLIT && SPLIT <= state.hi)
+      data.push({ xAxis: yl(SPLIT), label: { formatter: '博碩分列起點', position: 'insideEndTop' } });
+    if (!data.length) return undefined;
+    return { silent: true, symbol: 'none', animation: false,
+      lineStyle: { type: 'dashed', color: '#6b7280', width: 1.2 },
+      label: { color: '#4b5563', fontSize: 11, rotate: 90, distance: 4 }, data: data };
+  }
+
+  // 一個數列：values 為 {年: 值}
+  function mkSeries(card, id, name, color, dash, years, valueOf, withMarks) {
+    var s = {
+      id: card + '|' + id, name: name, type: state.types[card],
+      universalTransition: { enabled: true },
+      itemStyle: { color: color }, lineStyle: { color: color, width: 2.4, type: dash ? 'dashed' : 'solid' },
+      symbol: 'circle', symbolSize: 6, connectNulls: false, barMaxWidth: 22,
+      emphasis: { focus: 'series' },
+      data: years.map(function (y) { return { name: yl(y), value: valueOf(y) }; })
+    };
+    if (withMarks) { var m = markLine(years); if (m) s.markLine = m; }
+    return s;
+  }
+
+  // 計算每張卡片：{years, series[], hint}
+  function seriesSpecs() {
+    // 依「地區 × 學位顯示」展開成數列規格；全國與高雄各自一條，絕不相加
+    var specs = [];
+    state.areas.forEach(function (a) {
+      if (state.mode === 'total') specs.push({ area: a, edu: '研究所', name: a + '・研究所合計', dash: false });
+      else {
+        specs.push({ area: a, edu: '博士', name: a + '・博士', dash: false });
+        specs.push({ area: a, edu: '碩士', name: a + '・碩士', dash: true });
+      }
+    });
+    return specs;
+  }
+  function buildCard(i) {
+    var all = yearsRange(state.lo, state.hi);
+    var specs = seriesSpecs(), out = { years: all, series: [], hint: '' };
+    if (i === 1 || i === 2) {
+      if (state.mode === 'split' && state.hi < SPLIT) { out.hint = '「博碩分開」只有 ' + SPLIT + '–' + YMAX + ' 年的資料；目前年份區間沒有可畫的年份，請調整區間或改選「研究所合計」。'; return out; }
+      specs.forEach(function (sp, n) {
+        var f = function (y) {
+          if (state.mode === 'split' && y < SPLIT) return null;
+          var c = count(sp.area, sp.edu, y, state.comp);
+          return i === 1 ? c : ratio(c, pop[sp.area][y]);
+        };
+        out.series.push(mkSeries(i, sp.area + '|' + sp.edu, sp.name, COLORS[sp.area][sp.edu], sp.dash, all, f, n === 0));
+      });
+    } else if (i === 3) {
+      var ys = yearsRange(Math.max(state.lo, SPLIT), state.hi);
+      out.years = ys;
+      if (!ys.length) { out.hint = '博士占比只有 ' + SPLIT + '–' + YMAX + ' 年的資料；目前年份區間沒有可畫的年份。'; return out; }
+      state.areas.forEach(function (a, n) {
+        out.series.push(mkSeries(3, a, a, COLORS[a]['研究所'], false, ys, function (y) {
+          var p = count(a, '博士', y, state.comp), m = count(a, '碩士', y, state.comp);
+          return ratio(p, p == null || m == null ? 0 : p + m);
+        }, n === 0));
+      });
+    } else {
+      out.series.push(mkSeries(4, 'gap', '高雄 − 全國', GAP_COLOR, false, all, function (y) {
+        var k = ratio(count('高雄', '研究所', y, state.comp), pop['高雄'][y]);
+        var t = ratio(count('全國', '研究所', y, state.comp), pop['全國'][y]);
+        return (k == null || t == null) ? null : k - t;
+      }, true));
+    }
+    var any = out.series.some(function (s) { return s.data.some(function (d) { return d.value != null; }); });
+    if (!any) { out.series = []; out.hint = '目前的篩選條件沒有資料。'; }
+    return out;
+  }
+
+  var AXIS = {
+    1: { y: '人數（人）', fmt: function (v) { return fmtInt(v) + ' 人'; }, lab: function (v) { return v.toLocaleString('zh-TW'); } },
+    2: { y: '占十五歲以上人口比例（%）', fmt: function (v) { return v == null ? '–' : v.toFixed(2) + ' %'; }, lab: function (v) { return v + ' %'; } },
+    3: { y: '博士占研究所比例（%）', fmt: function (v) { return v == null ? '–' : v.toFixed(1) + ' %'; }, lab: function (v) { return v + ' %'; } },
+    4: { y: '差距（百分點）', fmt: function (v) { return v == null ? '–' : (v > 0 ? '+' : '') + v.toFixed(2) + ' 百分點'; }, lab: function (v) { return v; } }
+  };
+
+  function subtitle(i) {
+    if (i === 4) return '高雄 − 全國，' + compText();
+    if (i === 3) return '博士 ÷（博士＋碩士），' + compText();
+    return state.areas.join('、') + '｜' + (state.mode === 'total' ? '研究所合計' : '博士、碩士分開') + '｜' + compText();
+  }
+
+  function update(i) {
+    var c = buildCard(i), chart = charts[i];
+    var el = document.getElementById('chart-' + i), hint = document.getElementById('empty-' + i);
+    document.getElementById('sub-' + i).textContent = subtitle(i);
+    if (c.hint) {
+      hint.textContent = c.hint; hint.classList.add('show'); el.classList.add('hidden');
+      chart.setOption({ series: [] }, { replaceMerge: ['series'] });
+      return;
+    }
+    var wasHidden = el.classList.contains('hidden');
+    hint.classList.remove('show'); el.classList.remove('hidden');
+    if (wasHidden) chart.resize();
+    var ax = AXIS[i];
+    chart.setOption({
+      animationDuration: 600, animationDurationUpdate: 700, animationEasingUpdate: 'cubicInOut',
+      color: c.series.map(function (s) { return s.itemStyle.color; }),
+      grid: { left: 12, right: 24, top: 62, bottom: 44, containLabel: true },
+      legend: { top: 4, type: 'scroll', icon: 'roundRect', itemWidth: 18, itemHeight: 8 },
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, valueFormatter: ax.fmt },
+      xAxis: { type: 'category', data: c.years.map(yl), name: '年份（民國）', nameLocation: 'middle', nameGap: 28,
+               boundaryGap: state.types[i] === 'bar', axisLabel: { hideOverlap: true } },
+      yAxis: { type: 'value', name: ax.y, nameTextStyle: { align: 'left' }, axisLabel: { formatter: ax.lab }, scale: false },
+      series: c.series
+    }, { replaceMerge: ['series'] });
+  }
+  function updateAll() { [1, 2, 3, 4].forEach(update); }
+
+  // ---------- 篩選互動 ----------
+  var areaBox = document.getElementById('f-area');
+  function syncAreaUI() {
+    Array.prototype.forEach.call(areaBox.querySelectorAll('label'), function (l) {
+      l.classList.toggle('on', state.areas.indexOf(l.getAttribute('data-v')) >= 0);
+    });
+  }
+  areaBox.addEventListener('change', function (e) {
+    var picked = Array.prototype.filter.call(areaBox.querySelectorAll('input'), function (x) { return x.checked; })
+      .map(function (x) { return x.value; });
+    if (!picked.length) { e.target.checked = true; return; }  // 至少保留一個
+    state.areas = ['高雄', '全國'].filter(function (a) { return picked.indexOf(a) >= 0; });
+    syncAreaUI(); updateAll();
+  });
+  function bindSeg(id, key) {
+    var box = document.getElementById(id);
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      state[key] = b.getAttribute('data-v');
+      Array.prototype.forEach.call(box.querySelectorAll('button'), function (x) { x.classList.toggle('on', x === b); });
+      updateAll();
+    });
+  }
+  bindSeg('f-mode', 'mode'); bindSeg('f-comp', 'comp');
+
+  var rLo = document.getElementById('r-lo'), rHi = document.getElementById('r-hi');
+  function syncRangeUI() {
+    document.getElementById('range-val').textContent = yl(state.lo) + ' – ' + yl(state.hi);
+    var span = YMAX - YMIN, f = document.getElementById('fill');
+    f.style.left = ((state.lo - YMIN) / span * 100) + '%';
+    f.style.width = ((state.hi - state.lo) / span * 100) + '%';
+    rLo.style.zIndex = state.lo > YMAX - 2 ? 3 : 2;  // 兩端靠右時，起始端優先可拖
+  }
+  rLo.addEventListener('input', function () {
+    var v = +rLo.value; if (v > state.hi) { v = state.hi; rLo.value = v; }
+    state.lo = v; syncRangeUI(); updateAll();
+  });
+  rHi.addEventListener('input', function () {
+    var v = +rHi.value; if (v < state.lo) { v = state.lo; rHi.value = v; }
+    state.hi = v; syncRangeUI(); updateAll();
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('.type-toggle'), function (box) {
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      var i = +box.getAttribute('data-card');
+      state.types[i] = b.getAttribute('data-t');
+      Array.prototype.forEach.call(box.querySelectorAll('button'), function (x) { x.classList.toggle('on', x === b); });
+      update(i);
+    });
+  });
+
+  window.addEventListener('resize', function () { [1, 2, 3, 4].forEach(function (i) { charts[i].resize(); }); });
+
+  document.getElementById('title').textContent = META.title || document.getElementById('title').textContent;
+  syncAreaUI(); syncRangeUI(); updateAll();
+})();
+</script>
+</body>
+</html>
