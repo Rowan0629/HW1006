@@ -23,7 +23,6 @@ docs/data.js                  網頁用資料（window.GRAD_DATA，含 meta 註�
 
 ## 重新產生資料
 
-需要 [uv](https://docs.astral.sh/uv/)；套件（`xlrd`，讀舊版 `.xls`）由腳本內的 inline metadata 自動安裝。
 
 ```
 uv run etl/etl.py          # 產生 output/kaohsiung_gradschool.csv，並把驗證結果寫入 etl/validation_log.txt
@@ -31,7 +30,6 @@ uv run etl/validate.py     # 單獨重跑驗證
 uv run etl/build_data.py   # 產生 docs/data.js 並核對
 ```
 
-在本機看網頁：直接雙擊 `docs/index.html`（圖表用 ECharts CDN，需要網路）。
 
 ## 資料欄位
 
